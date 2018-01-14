@@ -1,0 +1,274 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_AdminLTELayoutPage.cshtml";
+}
+
+<section class="content-header">
+    <h1>
+        首页
+        <small>测试首页</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="#">Tables</a></li>
+        <li class="active">Data tables</li>
+    </ol>
+</section>
+
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">查询条件</h3>
+                </div>
+                <form class="form-horizontal" id="StuForm">
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="" class="col-sm-2 control-label">姓名：</label>
+                                <div class="col-sm-2">
+                                    <input type="text" class="form-control" name="Name" id="" placeholder="" value="">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2 control-label">学号：</label>
+                                <div class="col-sm-2">
+                                    <input type="text" class="form-control" id="" name="SchoolNum" placeholder="">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2 control-label">性别：</label>
+                                <div class="col-sm-2">
+                                    <select class="form-control" name="Sex">
+                                        <option value="-1">所有</option>
+                                        <option value="0">男</option>
+                                        <option value="1">女</option>
+
+                                    </select>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="box-footer">
+                            <button type="button" class="btn btn-primary" onclick="StudentQuery()">查询</button>
+                        </div>
+                    </div>
+                    <!-- /.box-body -->
+                </form>
+            </div>
+            <!-- /.box -->
+        </div>
+        <!-- /.col -->
+        <div class="col-md-12">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">学生信息</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body">
+                    <div id="example2_wrapper" class="dataTables_wrapper form-inline dt-bootstrap">
+                        <div class="row">
+                            <div class="col-sm-6"></div>
+                            <div class="col-sm-6"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="example2" class="table table-bordered table-hover dataTable" role="grid" aria-describedby="example2_info">
+                                    <thead>
+                                        <tr role="row">
+                                          
+                                            <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" >编号</th>
+                                            <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" >姓名</th>
+                                            <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" >学号</th>
+                                            <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1" >性别</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="StudentInfo_box">
+                                      
+                                        
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <ul id="example" style="float:right"></ul>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-body -->
+            </div>
+        </div>
+        <!-- /.col -->
+       
+    </div>
+    <!-- /.row -->
+</section>
+@section myJavaScript
+{
+<script type="text/javascript">
+    //后台参数对象
+    var v_parmObj = {
+        page: 1,
+        pageSize: 10,
+        fromParm: {}
+
+    }
+    //页面加载时请求第一次请求
+    $("#StudentInfo_box").ready(function () {
+        var PO = JSON.stringify(v_parmObj);
+        console.log(PO);
+        jQuery.ajax({
+            url: "/Demo/GetStuData",
+            type: "post",
+            data: PO, //加载默认的参数对象
+            contentType: 'application/json',
+            dataType: "json",
+            success: function (data) {
+                if (data.BS > 0) {
+                    $("#StudentInfo_box").html('');
+                    $.each(data.rows, function (i, item) {
+                        var Str = HTMLStr(item)
+                        $("#StudentInfo_box").append(Str);
+                    });
+                    //初始化分页控件
+                    InitExample(data.count, v_parmObj);
+                } else {
+                    alert(data.Msg);
+                }
+
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(XMLHttpRequest.status);
+                alert(XMLHttpRequest.readyState);
+                alert(textStatus);
+            },
+            complete: function (XMLHttpRequest, textStatus) {
+                this; // 调用本次AJAX请求时传递的options参数
+            }
+        });
+    });
+    //初始化分页方法
+    function InitExample(pageCount, v_parmObj)
+    {
+        
+        var fys = (pageCount % v_parmObj.pageSize) == 0 ? (pageCount / v_parmObj.pageSize) : (pageCount / v_parmObj.pageSize) + 1; //分页数
+        var options = {
+            bootstrapMajorVersion: 3,    //版本
+            currentPage: v_parmObj.page,
+            totalPages: fys,
+            numberOfPages: 10,
+            itemTexts: function (type, page, current) {
+                switch (type) {
+                    case "first":
+                        return "首页";
+                    case "prev":
+                        return "上一页";
+                    case "next":
+                        return "下一页";
+                    case "last":
+                        return "末页";
+                    case "page":
+                        return page;
+                }
+            },
+            onPageClicked: function (event, originalEvent, type, page) {
+                v_parmObj.page = page;
+                LoadingStudentData(v_parmObj);
+            }
+        }
+
+        $('#example').bootstrapPaginator(options);
+    }
+
+    //分页按钮加载数据方法
+   function LoadingStudentData(v_parmObj)
+    {
+       var PO = JSON.stringify(v_parmObj);
+       console.log(PO);
+       jQuery.ajax({
+           url: "/Demo/GetStuData",
+           type: "post",
+           data: PO,
+           contentType: 'application/json',
+           dataType: "json",
+           success: function (data) {
+               if (data.BS > 0) {
+                   $("#StudentInfo_box").html('');
+                   $.each(data.rows, function (i, item) {
+                       var Str = HTMLStr(item)
+                       $("#StudentInfo_box").append(Str);
+                   });
+                   //重置分页控件
+               } else {
+                   alert(data.Msg);
+               }
+               
+           },
+           error: function (XMLHttpRequest, textStatus, errorThrown) {
+               alert(XMLHttpRequest.status);
+               alert(XMLHttpRequest.readyState);
+               alert(textStatus);
+           },
+           complete: function (XMLHttpRequest, textStatus) {
+               this; // 调用本次AJAX请求时传递的options参数
+           }
+       });
+   }
+
+   function HTMLStr(item)
+   {
+       var html = '  <tr role="row" >'+
+                        
+                                          '<td class="sorting_1">'+item.ID+'</td>' +
+                                           '<td>' + item.Name + '</td> ' +
+                                            '<td>' + item.SchoolNum + '</td> ' +
+                                            '<td>' + item.Sex + '</td> ' +
+                                            '</tr>'
+       return html;
+   }
+    //表单查询按钮
+   function StudentQuery()
+   {
+       var queryForm = $("#StuForm").serializeArray();
+       v_parmObj.fromParm = queryForm;  //得到表单参数
+       var PO = JSON.stringify(v_parmObj);
+       console.log(PO);
+       jQuery.ajax({
+           url: "/Demo/GetStuData",
+           type: "post",
+           data: PO, //加载默认的参数对象
+           contentType: 'application/json',
+           dataType: "json",
+           success: function (data) {
+               if (data.BS > 0) {
+                   $("#StudentInfo_box").html('');
+                   $.each(data.rows, function (i, item) {
+                       var Str = HTMLStr(item)
+                       $("#StudentInfo_box").append(Str);
+                   });
+                   //初始化分页控件
+                   InitExample(data.count, v_parmObj);
+               } else {
+                   alert(data.Msg);
+               }
+
+           },
+           error: function (XMLHttpRequest, textStatus, errorThrown) {
+               alert(XMLHttpRequest.status);
+               alert(XMLHttpRequest.readyState);
+               alert(textStatus);
+           },
+           complete: function (XMLHttpRequest, textStatus) {
+               this; // 调用本次AJAX请求时传递的options参数
+           }
+       });
+   }
+</script>    
+}
+
